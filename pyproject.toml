@@ -58,5 +58,8 @@ profile = "black"
 
 # It seems that hatch always traverses the entire project root.
 # Simply limit it to our wanted package.
-[tool.hatch.build.targets.sdist]
+[tool.hatch.build.targets.wheel]
 packages = ["src/monodromy"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"src/monodromy/vendor/lrslib/bin/" = "src/monodromy/vendor/lrslib/bin"

@@ -22,6 +22,14 @@ stdenv.mkDerivation {
     "CC:=$(CC)"
   ];
 
+  postFixup = ''
+    for dll in $out/bin/*.dll; do
+      orig=$(readlink -f $dll)
+      rm $dll
+      cp $orig $dll
+    done
+  '';
+
   meta = {
     description = "Implementation of the reverse search algorithm for vertex enumeration/convex hull problems";
     license = lib.licenses.gpl2;
