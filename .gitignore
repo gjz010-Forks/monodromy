@@ -143,3 +143,9 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Nix
+result
+.devenv/
+.direnv/
+

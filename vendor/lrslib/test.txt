@@ -1,0 +1,11 @@
+square
+*centred square of side 2
+H-representation
+begin
+4 3 rational
+1 1 0
+1 0 1
+1 -1 0
+1 0 -1
+end
+
