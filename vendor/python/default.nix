@@ -5,6 +5,8 @@
   ...
 }:
 {
+  imports = [ ./hooks.nix ];
+
   config = {
     languages.python = {
       enable = true;

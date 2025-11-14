@@ -148,4 +148,4 @@ dmypy.json
 result
 .devenv/
 .direnv/
-
+.pre-commit-config.yaml
