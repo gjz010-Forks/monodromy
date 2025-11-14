@@ -50,6 +50,9 @@ transpile_benchy = { git = "https://github.com/evmckinney9/transpile_benchy" }
 target-version = "py39"
 fix = true
 
+[tool.ruff.lint]
+ignore = ["F403", "F405"]
+
 [tool.isort]
 profile = "black"
 

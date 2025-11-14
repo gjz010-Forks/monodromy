@@ -48,4 +48,9 @@ precommit:
 	@$(PIP) install -e .[format] --quiet
 	$(PRE_COMMIT) run --all-files
 
+
+vendor_lrs:
+	nix build .#lrs -o src/monodromy/vendor/lrslib/bin/linux-x86_64
+	nix build .#lrs_mingw -o src/monodromy/vendor/lrslib/bin/win-amd64
+
 .PHONY: init upgrade clean test precommit format

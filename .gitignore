@@ -149,3 +149,8 @@ result
 .devenv/
 .direnv/
 .pre-commit-config.yaml
+
+
+# Vendor
+src/monodromy/vendor/lrslib/bin/*
+!src/monodromy/vendor/lrslib/bin/.gitkeep

@@ -20,7 +20,9 @@
       forbid-new-submodules.enable = true;
       name-tests-test = {
         enable = true;
-        args = [ "--pytest" ];
+        name = "name-tests-test";
+        args = [ "--pytest-test-first" ];
+        entry = "${config.git-hooks.hooks.name-tests-test.package}/bin/name-tests-test";
       };
       pretty-format-json = {
         enable = true;

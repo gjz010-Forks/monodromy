@@ -6,7 +6,6 @@ More information about `lrs`:
 http://cgm.cs.mcgill.ca/~avis/C/lrs.html
 """
 
-
 import math  # for gcd
 from copy import copy
 from fractions import Fraction
@@ -22,11 +21,24 @@ from ..utilities import lcm
 from .backend_abc import Backend
 
 LRS_ENV = "LRS_PATH"
-"""Environment variable used to override the path to the `lrs` executable."""
+# """Environment variable used to override the path to the `lrs` executable."""
 
 
-LRS_PATH = getenv(LRS_ENV, "lrs")
-"""Default path to the user's `lrs` executable."""
+def populate_lrs_path():
+    lrs_env_path = getenv(LRS_ENV)
+    if lrs_env_path is not None:
+        return lrs_env_path
+    # check vendored path
+    from ..vendor.lrslib import get_vendored_lrslib_path
+
+    lrs_env_path = get_vendored_lrslib_path("lrs")
+    if lrs_env_path is not None:
+        return lrs_env_path
+    return "lrs"
+
+
+LRS_PATH = populate_lrs_path()
+# """Default path to the user's `lrs` executable."""
 
 
 def check_for_lrs():
@@ -171,7 +183,7 @@ def encode_inequalities(
     #               f"{' '.join(range(1, 1 + len(equalities)))}\n"
     output += "begin\n"
     output += (
-        f"{len(inequalities) + 2*len(equalities)}"
+        f"{len(inequalities) + 2 * len(equalities)}"
         f" {len((inequalities + equalities)[0])}"
         " rational\n"
     )
