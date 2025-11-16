@@ -153,7 +153,7 @@ class LRSBackend(Backend):
         )
 
 
-def single_lrs_pass(payload: bytes, chatty=True) -> bytes:
+def single_lrs_pass(payload: bytes, chatty=False) -> bytes:
     """Generic wrapper for lrs."""
     if chatty:
         print("=== LRS CALL ===")
