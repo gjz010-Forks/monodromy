@@ -60,7 +60,6 @@ class TestMonodromyCoverage(unittest.TestCase):
         self.assertTrue(expected_cx2.contains(cx2_polytope))
         self.assertTrue(cx2_polytope.contains(expected_cx2))
 
-    @unittest.skip(reason="Failed for some reason")
     def test_sqrtcx_coverage(self):
         """Test Example 49 of Peterson-Crooks-Smith."""
         sqrtcx_polytope = CircuitPolytope(

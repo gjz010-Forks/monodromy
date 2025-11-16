@@ -10,6 +10,7 @@
       trim-trailing-whitespace = {
         enable = true;
         args = [ "--markdown-linebreak-ext=md" ];
+        exclude_types = [ "diff" ];
       };
       check-docstring-first.enable = true;
       check-merge-conflicts.enable = true;

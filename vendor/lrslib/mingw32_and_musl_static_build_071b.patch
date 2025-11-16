@@ -1,0 +1,214 @@
+--- a/makefile	2021-06-02 16:42:36.000000000 +0800
++++ b/makefile	2025-11-15 13:44:28.541198706 +0800
+@@ -7,6 +7,20 @@
+ 
+ #try uncommenting next line if cc is the default C compiler
+ #CC = gcc
++CC ?= clang
++
++EXEEXT=
++SHLIBPATH=$(DESTDIR)${prefix}/lib
++STATICLIBPATH=$(DESTDIR)${prefix}/lib
++BUILD_TYPE ?= static
++$(eval MINGW32_CHECK := $(shell $(CC) --version | grep mingw32 | wc -l))
++ifeq ($(MINGW32_CHECK),1)
++ $(info OpenMP support not found, disabling OpenMP parallel build)
++ PLRSFLAGS=
++ CFLAGS += -DSIGNALS -DTIMES -DWIN
++ EXEEXT=.exe
++ SHLIBPATH=$(DESTDIR)${prefix}/bin
++endif
+ 
+ default: lrs lrsgmp
+ 
+@@ -32,8 +46,16 @@
+ #LIBDIR     = /usr/lib
+ 
+ #Kyoto machines usage
+-INCLUDEDIR = /usr/local/include
+-LIBDIR     = /usr/local/lib
++# INCLUDEDIR = /usr/local/include
++# LIBDIR     = /usr/local/lib
++
++
++# INCLUDEDIR = /opt/homebrew/include
++# LIBDIR     = /opt/homebrew/lib
++
++INCLUDEDIR = /opt/homebrew/Cellar/gmp/6.3.0/include
++LIBDIR     = /opt/homebrew/Cellar/gmp/6.3.0/lib
++
+ 
+ CFLAGS     ?= -O3 -Wall
+ #CFLAGS     = -g -Wall 
+@@ -210,8 +232,17 @@
+ # Shared library variables
+ SONAME ?=liblrs.so.1
+ SOMINOR ?=.0.0
+-SHLIB ?=$(SONAME)$(SOMINOR)
+ SHLINK ?=liblrs.so
++STATICLIBNAME ?= liblrs.a.1
++STATICLIBLINK ?= liblrs.a
++
++SHLIB ?=$(SONAME)$(SOMINOR)
++STATICLIB ?=$(STATICLIBNAME)$(SOMINOR)
++ifeq ($(MINGW32_CHECK),1)
++	SONAME = liblrs-1.dll
++	SHLINK=liblrs.dll
++	SHLIB=liblrs-1$(SOMINOR).dll
++endif
+ 
+ SHLIBOBJ2=lrslib2-shr.o lrslong2-shr.o
+ 
+@@ -223,35 +254,72 @@
+ 	lrslibgmp-shr.o lrsgmp-shr.o lrsdriver-shr.o \
+ 	${SHLIBOBJ2}
+ 
+-SHLIBBIN=lrs-shared lrsnash-shared
++STATICLIBOBJ2=lrslib2-static.o lrslong2-static.o
++
++# for 32 bit machines
++
++# SHLIBOBJ2=
++
++STATICLIBOBJ=lrslong1-static.o lrslib1-static.o  \
++	lrslibgmp-static.o lrsgmp-static.o lrsdriver-static.o \
++	${STATICLIBOBJ2}
++
++SHLIBBIN=lrs-shared$(EXEEXT) lrsnash-shared$(EXEEXT)
++STATICLIBBIN=lrs-static$(EXEEXT) lrsnash-static$(EXEEXT)
+ 
+ # Building (linking) the shared library, and relevant symlinks.
+ 
++# ${SHLIB}: ${SHLIBOBJ}
++# 	$(CC) -shared -Wl,-soname=$(SONAME) $(SHLIBFLAGS) -o $@ ${SHLIBOBJ} -lgmp
++
++SHLIBFLAG= -Wl,-soname=$(SONAME)
++
++ifeq ($(APPLE_CHECK),1)
++	SHLIBFLAG=-Wl,-install_name,@rpath/$(SONAME)
++endif
+ ${SHLIB}: ${SHLIBOBJ}
+-	$(CC) -shared -Wl,-soname=$(SONAME) $(SHLIBFLAGS) -o $@ ${SHLIBOBJ} -lgmp
++	$(CC) -shared $(SHLIBFLAGS) -o $@ ${SHLIBOBJ} -lgmp
++
++
++${STATICLIB}: ${STATICLIBOBJ}
++	$(AR) -rcs $@ $^
++
++
+ 
+ ${SONAME}: ${SHLIB}
+-	ln -sf ${SHLIB} ${SONAME}
++	ln -sf $< $@
+ 
+ ${SHLINK}: ${SONAME}
+ 	ln -sf $< $@
+ 
++${STATICLIBNAME}: ${STATICLIB}
++	ln -sf $< $@
++
++${STATICLIBLINK}: ${STATICLIBNAME}
++	ln -sf $< $@
++
+ # binaries linked against the shared library
+ 
+ all-shared: ${SHLIBBIN}
++all-static: ${STATICLIBBIN}
+ 
+-lrs-shared: ${SHLINK} lrs-shared.o
++lrs-shared$(EXEEXT): ${SHLINK} lrs-shared.o
+ 	$(CC) $^ -o $@ -L . -llrs
+-
+-
+-lrsnash-shared: ${SHLINK}  lrsnash.c
+-	$(CC) ${CFLAGS} -DGMP -DMA lrsnash.c  lrsnashlib.c -I${INCLUDEDIR} -o $@ -L . -llrs -lgmp
++lrsnash-shared$(EXEEXT): ${SHLINK}  lrsnash.c
++	$(CC) ${CFLAGS} -DGMP -DMA lrsnash.c  lrsnashlib.c -I${INCLUDEDIR} -o $@ -L . -llrs -lgmp -static-libgcc
++lrs-static$(EXEEXT): ${STATICLIBLINK} lrs-static.o
++	$(CC) $^ -o $@ -L . -llrs -lgmp
++lrsnash-static$(EXEEXT): ${STATICLIBLINK}  lrsnash.c
++	$(CC) ${CFLAGS} -DGMP -DMA lrsnash.c  lrsnashlib.c -I${INCLUDEDIR} -o $@ -L . -llrs -lgmp -static-libgcc
+ 
+ # driver object files
+ 
+ lrs-shared.o: lrs.c
+ 	$(CC) ${CFLAGS} -DMA ${BITS} -L${LIBDIR} -c -o $@ lrs.c
+ 
++lrs-static.o: lrs.c
++	$(CC) ${CFLAGS} -DMA ${BITS} -L${LIBDIR} -c -o $@ lrs.c
++
+ # build object files for the shared library
+ 
+ lrslib1-shr.o: lrslib.c lrslib.h
+@@ -275,27 +343,62 @@
+ lrslib2-shr.o: lrslib.c lrslib.h
+ 	$(CC) ${CFLAGS} ${SHLIB_CFLAGS} -DMA -DSAFE ${BITS} -DLRSLONG -c -o $@ lrslib.c
+ 
++
++# build object files for the static library
++
++lrslib1-static.o: lrslib.c lrslib.h
++	$(CC) ${CFLAGS} -DMA -DSAFE -DLRSLONG -c -o $@ lrslib.c
++
++lrsdriver-static.o: lrsdriver.c
++	$(CC) ${CFLAGS} -c -o $@ $<
++
++lrslong1-static.o: ${ARITH}lrslong.c ${ARITH}lrslong.h
++	$(CC) ${CFLAGS} -DMA -DSAFE -DLRSLONG -c -o $@ ${ARITH}lrslong.c
++
++lrslong2-static.o: ${ARITH}lrslong.c ${ARITH}lrslong.h
++	$(CC) ${CFLAGS} -DMA -DSAFE ${BITS} -DLRSLONG -c -o $@ ${ARITH}lrslong.c
++
++lrslibgmp-static.o: lrslib.c lrslib.h
++	$(CC) ${CFLAGS} -DMA -DGMP -I${INCLUDEDIR} -c -o $@ lrslib.c
++
++lrsgmp-static.o: ${ARITH}lrsgmp.c ${ARITH}lrsgmp.h
++	$(CC) ${CFLAGS} -DMA -DGMP -I${INCLUDEDIR} -c -o $@ ${ARITH}lrsgmp.c
++
++lrslib2-static.o: lrslib.c lrslib.h
++	$(CC) ${CFLAGS} -DMA -DSAFE ${BITS} -DLRSLONG -c -o $@ lrslib.c
++
+ ######################################################################
+ # install targets
+ # where to install binaries, libraries, include files
+ prefix ?= /usr/local
+ INSTALL_INCLUDES=lrslib.h lrsdriver.h lrsgmp.h lrslong.h lrsmp.h lrsrestart.h
+ 
+-install: all-shared install-common
++install: install-$(BUILD_TYPE)
++install-static: all-static install-common
+ 	mkdir -p $(DESTDIR)${prefix}/bin
+-	for file in ${SHLIBBIN}; do cp $${file} $(DESTDIR)${prefix}/bin/$$(basename $$file -shared); done
+-	mkdir -p $(DESTDIR)${prefix}/lib
+-	install -t $(DESTDIR)${prefix}/lib $(SHLIB)
+-	cd $(DESTDIR)${prefix}/lib && ln -sf $(SHLIB) $(SHLINK)
+-	cd $(DESTDIR)${prefix}/lib && ln -sf $(SHLIB) $(SONAME)
++	for file in ${STATICLIBBIN}; do cp $${file} $(DESTDIR)${prefix}/bin/$$(basename $$file -static${EXEEXT})${EXEEXT}; done
++	mkdir -p $(STATICLIBPATH)
++	install $(STATICLIB) $(STATICLIBPATH)
++	cd $(STATICLIBPATH) && ln -sf $(STATICLIB) $(STATICLIBLINK)
++	cd $(STATICLIBPATH) && ln -sf $(STATICLIB) $(STATICLIBNAME)
++
++install-shared: all-shared install-common
++	mkdir -p $(DESTDIR)${prefix}/bin
++	for file in ${SHLIBBIN}; do cp $${file} $(DESTDIR)${prefix}/bin/$$(basename $$file -shared${EXEEXT})${EXEEXT}; done
++	mkdir -p $(SHLIBPATH)
++	install $(SHLIB) $(SHLIBPATH)
++	cd $(SHLIBPATH) && ln -sf $(SHLIB) $(SHLINK)
++	cd $(SHLIBPATH) && ln -sf $(SHLIB) $(SONAME)
+ 
+ install-common:
+ 	mkdir -p $(DESTDIR)${prefix}/include/lrslib
+-	install -t $(DESTDIR)${prefix}/include/lrslib ${INSTALL_INCLUDES}
++	install ${INSTALL_INCLUDES} $(DESTDIR)${prefix}/include/lrslib
++
++all: lrs
+ 
+ ######################################################################
+ clean:		
+-	rm -f  lrs lrs1 lrsgmp lrs1n lpdemo lpdemo1 lpdemo2 mplrs1 mplrs mplrsmp  mplrsgmp lrs2 mplrs2 lrsflint mplrsflint *.o *.exe *.so
++	rm -f  lrs lrs1 lrsgmp lrs1n lpdemo lpdemo1 lpdemo2 mplrs1 mplrs mplrsmp  mplrsgmp lrs2 mplrs2 lrsflint mplrsflint *.o *.exe *.so *.dll
+ 	rm -f  hvref setnash setnash2 fel1 fel1 felgmp lrsnashgmp lrsnash lrsnash1 lrsnash2 nashdemo 2nash vedemo
+-	rm -f ${LRSOBJ} ${LRSOBJ64} ${SHLIBOBJ} ${SHLIB} ${SONAME} ${SHLINK}
++	rm -f ${LRSOBJ} ${LRSOBJ64} ${SHLIBOBJ} ${STATICLIBOBJ} ${SHLIB} ${STATICLIB} ${SONAME} ${SHLINK}
+ 	rm -f ${SHLIBBIN}

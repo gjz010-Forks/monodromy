@@ -1579,7 +1579,7 @@ requires-dist = [
     { name = "pylatexenc", marker = "extra == 'dev'" },
     { name = "pytest" },
     { name = "pytest", marker = "extra == 'test'" },
-    { name = "qiskit", specifier = "~=0.43.3" },
+    { name = "qiskit" },
     { name = "retworkx" },
     { name = "ruff", marker = "extra == 'format'" },
     { name = "scipy" },

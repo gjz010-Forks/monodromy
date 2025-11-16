@@ -49,14 +49,17 @@
                 self.overlays.default
               ];
             };
-            packages.lrs = pkgs.pkgsStatic.lrs_073;
-            packages.lrs_mingw = pkgs.pkgsCross.mingwW64.lrs_073;
+            packages.lrs_073a = pkgs.pkgsStatic.lrs_073a;
+            packages.lrs_073a_mingw = pkgs.pkgsCross.mingwW64.lrs_073a;
+            packages.lrs_071b = pkgs.pkgsStatic.lrs_071b;
+            packages.lrs_071b_mingw = pkgs.pkgsCross.mingwW64.lrs_071b;
+            packages.lrs = config.packages.lrs_071b;
+            packages.lrs_mingw = config.packages.lrs_071b_mingw;
 
             devenv.shells.default = {
 
               imports = [
                 ./vendor/python
-
               ];
 
               packages = with pkgs; [
@@ -72,9 +75,7 @@
           # The usual flake attributes can be defined here, including system-
           # agnostic ones like nixosModule and system-enumerating ones, although
           # those are more easily expressed in perSystem.
-          overlays.default = final: prev: {
-            lrs_073 = final.callPackage ./vendor/lrslib { };
-          };
+          overlays.default = import ./vendor/lrslib;
         };
       }
     );
