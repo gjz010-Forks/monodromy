@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "monodromy"
-version = "0.0.1"
+version = "0.0.2"
 description = "Computations in the monodromy polytope for quantum gate sets"
 authors = [{ name = "Eric Peterson", email = "Eric.Peterson@ibm.com" }]
 
