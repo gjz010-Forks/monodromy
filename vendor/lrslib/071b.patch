@@ -1,5 +1,5 @@
 diff --git a/lrslib.c b/lrslib.c
-index bdae658..dab2dfa 100644
+index bdae658..b6aec8e 100644
 --- a/lrslib.c
 +++ b/lrslib.c
 @@ -888,7 +888,11 @@ lrs_read_dat (lrs_dat * Q, int argc, char *argv[])
@@ -15,10 +15,12 @@ index bdae658..dab2dfa 100644
           mkstemp(tmpfilename);
           lrs_stdin_to_file(tmpfilename);
           lrs_ifp=fopen (tmpfilename, "r");
-@@ -5936,7 +5940,11 @@ if (strcmp(Q->fname,"lrs") == 0 || strcmp(Q->fname,"redund")==0)
+@@ -5935,8 +5939,12 @@ if (strcmp(Q->fname,"lrs") == 0 || strcmp(Q->fname,"redund")==0)
+        {
          if (*tmpfilename != '\0' )  /* we made a temporary file for stdin  */
             if(remove(tmpfilename) != 0)
-               fprintf (lrs_ofp, "\nCould not delete temporary file");
+-              fprintf (lrs_ofp, "\nCould not delete temporary file");
++              fprintf (lrs_ofp, "\n*Could not delete temporary file");
 +#ifdef WIN
 +        strncpy(tmpfilename,"lrs_restartXXXXXX",PATH_MAX);
 +#else

@@ -15,7 +15,7 @@ stdenv.mkDerivation {
   };
   buildInputs = [ gmp ];
 
-  patches = [ ./mingw32_and_musl_static_build_071b.patch ];
+  patches = [ ./071b.patch ];
   makeFlags = [
     "prefix=${placeholder "out"}"
     "CC:=$(CC)"
